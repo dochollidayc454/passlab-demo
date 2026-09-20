@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>PassLab</title>
+<style>
+:root{--bg:#07111c;--panel:#122033;--line:#24384f;--text:#e8f1fb;--muted:#8aa0b8;--ice:#7ec8ff;--ok:#3dcf8e;--warn:#f0c14b;--stop:#e23b3b;--go:#1f8a56}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:#07111c;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,sans-serif;user-select:none}
+body{padding:14px}
+.wrap{max-width:820px;margin:0 auto}
+h1{margin:0;letter-spacing:.08em;font-size:22px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.label{color:var(--muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.armed{font-size:28px;font-weight:800}
+.yes{color:var(--warn)}.no{color:var(--muted)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+button{appearance:none;border:0;border-radius:14px;min-height:64px;font-size:18px;font-weight:800;color:#fff}
+button:disabled{opacity:.38}
+.arm{background:#8a6a12}.arm.on{background:var(--warn);color:#1b1403}
+.fire{background:#2b5d8a}.start{background:var(--go)}
+.stop{background:var(--stop);min-height:84px;font-size:28px}
+.leds{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.led{text-align:center}
+.lamp{width:22px;height:22px;border-radius:50%;margin:0 auto 6px;background:#1a2736}
+.lamp.a{background:#ffd34d;box-shadow:0 0 16px #ffd34d}
+.lamp.v{background:#ff4d4d;box-shadow:0 0 16px #ff4d4d}
+.lamp.p{background:#7ec8ff;box-shadow:0 0 16px #7ec8ff}
+.lamp.s{background:#7cffb2;box-shadow:0 0 16px #4ad88a}
+.lane{height:46px;position:relative;overflow:hidden;background:#08141f;border-radius:10px;margin-top:10px;border:1px solid var(--line)}
+.puck{position:absolute;top:11px;left:10px;width:24px;height:24px;border-radius:50%;background:#222;border:2px solid #888}
+.puck.go{animation:go .45s ease-out forwards}
+@keyframes go{to{transform:translateX(70vw);opacity:.2}}
+.tape{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.pip{width:12px;height:12px;border-radius:3px;background:#1a2736;border:1px solid #2d445c}
+.pip.lit{background:var(--ice)}
+.field{background:#0c1a2b;border:1px solid var(--line);border-radius:14px;padding:10px}
+.field label{display:block;color:var(--muted);font-size:12px;text-transform:uppercase}
+.field input{width:100%;border:0;background:transparent;color:#fff;font-size:28px;font-weight:800}
+.seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.seg button{min-height:48px;background:transparent;color:var(--muted);font-size:15px}
+.seg button.on{background:#1d4f73;color:#fff}
+.note{color:var(--muted);font-size:13px}
+.nums{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:34px;font-weight:800}
+.ice{color:var(--ice)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PASSLAB</h1>
+  <div class="sub">Demo bench · open this in Safari, not the Files preview</div>
+  <div class="card">
+    <div class="label">Test bench</div>
+    <div class="leds">
+      <div class="led"><div id="lA" class="lamp"></div>Armed</div>
+      <div class="led"><div id="lV" class="lamp"></div>Valve</div>
+      <div class="led"><div id="lP" class="lamp"></div>Puck left</div>
+      <div class="led"><div id="lS" class="lamp"></div><span id="sLbl">Flat</span></div>
+    </div>
+    <div class="lane"><div id="puck" class="puck"></div></div>
+    <div id="tape" class="tape"></div>
+    <div class="note" id="note">Disarmed</div>
+  </div>
+  <div class="card">
+    <div class="label">State</div>
+    <div id="ban" class="armed no">DISARMED</div>
+    <div class="nums"><div>Fired <span id="fired">0</span></div><div class="ice">Left <span id="left">0</span></div></div>
+    <div class="label">Next</div><div id="next" style="font-size:36px;font-weight:800">—</div>
+  </div>
+  <div class="row">
+    <button id="btnArm" class="arm" type="button">ARM</button>
+    <button id="btnFire" class="fire" type="button" disabled>FIRE ONCE</button>
+  </div>
+  <div class="row">
+    <button id="btnStart" class="start" type="button" disabled>START</button>
+    <button id="btnStop" class="stop" type="button">STOP</button>
+  </div>
+  <div class="card">
+    <div class="row">
+      <div class="field"><label>Interval s</label><input id="interval" type="number" value="2"></div>
+      <div class="field"><label>Count</label><input id="count" type="number" value="8"></div>
+    </div>
+    <div class="field" style="margin:8px 0"><label>First delay s</label><input id="delay" type="number" value="1"></div>
+    <div class="seg" id="seg">
+      <button type="button" data-s="flat" class="on">Flat</button>
+      <button type="button" data-s="sauce">Sauce</button>
+      <button type="button" data-s="alt">Alternate</button>
+    </div>
+  </div>
+</div>
+<script>
+const S={armed:false,running:false,fired:0,left:0,count:8,int:2000,delay:1000,sauce:'flat',alt:false,t:null,next:0};
+const $=id=>document.getElementById(id);
+function leds(v,p){
+  $('lA').className='lamp'+(S.armed?' a':'');
+  $('lV').className='lamp'+(v?' v':'');
+  $('lP').className='lamp'+(p?' p':'');
+  const sl=S.sauce==='sauce'||(S.sauce==='alt'&&S.alt);
+  $('lS').className='lamp'+(sl?' s':'');
+  $('sLbl').textContent=sl?'Sauce':'Flat';
+}
+function tape(){
+  const n=Math.min(40,Math.max(S.count,S.fired,1));
+  $('tape').innerHTML=Array.from({length:n},(_,i)=>'<div class="pip'+(i<S.fired?' lit':'')+'"></div>').join('');
+}
+function render(){
+  $('ban').textContent=S.armed?'ARMED':'DISARMED';
+  $('ban').className='armed '+(S.armed?'yes':'no');
+  $('btnArm').textContent=S.armed?'DISARM':'ARM';
+  $('btnArm').classList.toggle('on',S.armed);
+  $('btnFire').disabled=!S.armed||S.running;
+  $('btnStart').disabled=!S.armed||S.running;
+  $('fired').textContent=S.fired;
+  $('left').textContent=S.left;
+  const ms=S.running?Math.max(0,S.next-Date.now()):-1;
+  $('next').textContent=ms<0?'\u2014':(ms/1000).toFixed(1)+'s';
+  if(!S.running) $('note').textContent=S.armed?'Armed \u2014 Fire or Start':'Disarmed';
+  leds(false,false); tape();
+}
+function shoot(){
+  S.fired++; if(S.running) S.left=Math.max(0,S.left-1);
+  if(S.sauce==='alt') S.alt=!S.alt;
+  $('note').textContent='Puck '+S.fired+' left the ram';
+  const puck=$('puck'); puck.classList.remove('go'); void puck.offsetWidth; puck.classList.add('go');
+  leds(true,true); tape();
+  $('fired').textContent=S.fired; $('left').textContent=S.left;
+  setTimeout(()=>leds(false,true),180);
+  setTimeout(()=>leds(false,false),420);
+}
+$('btnArm').onclick=()=>{S.armed=!S.armed; if(!S.armed){S.running=false; if(S.t) clearInterval(S.t);} render();};
+$('btnFire').onclick=()=>{if(S.armed&&!S.running) shoot();};
+$('btnStop').onclick=()=>{S.running=false; if(S.t) clearInterval(S.t); render();};
+$('btnStart').onclick=()=>{
+  if(!S.armed) return;
+  S.int=Math.max(500,Number($('interval').value)*1000||2000);
+  S.count=Math.max(1,Number($('count').value)||8);
+  S.delay=Math.max(0,Number($('delay').value)*1000||0);
+  S.fired=0; S.left=S.count; S.running=true; S.next=Date.now()+S.delay; S.alt=S.sauce==='sauce';
+  if(S.t) clearInterval(S.t);
+  S.t=setInterval(()=>{
+    if(!S.running) return;
+    if(Date.now()>=S.next){ shoot(); if(S.left<=0){S.running=false; clearInterval(S.t); $('note').textContent='Drill done \u2014 '+S.fired+' pucks';} else S.next=Date.now()+S.int; }
+    render();
+  },50);
+  render();
+};
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{S.sauce=b.dataset.s; document.querySelectorAll('#seg button').forEach(x=>x.classList.toggle('on',x===b)); render();});
+render();
+</script>
+</body></html>
